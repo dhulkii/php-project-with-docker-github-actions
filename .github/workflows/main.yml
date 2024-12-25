@@ -3,7 +3,7 @@ name: Deploy New Docker Containerrr
 on:
   push:
     branches:
-      - main
+      - master
 
 env:
   SERVER_HOST: ${{ secrets.SERVER_HOST }}

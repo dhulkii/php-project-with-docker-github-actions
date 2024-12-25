@@ -1,62 +1,46 @@
-# Stage 1: Build stage for PHP dependencies and Node.js assets
-FROM php:8.2-fpm AS build
+# Build stage
+FROM node:18-alpine AS build
 
-# Install system dependencies for Laravel
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    curl \
-    libzip-dev \
-    libpng-dev \
-    libpq-dev && \
-    docker-php-ext-install \
+# Set working directory
+WORKDIR /app
+
+# Copy only package.json and package-lock.json to leverage Docker cache
+COPY package.json package-lock.json ./
+
+# Install dependencies and build assets
+RUN npm install && npm run build
+
+# Application stage
+FROM php:8.2-fpm-alpine
+
+# Install required runtime dependencies
+RUN apk add --no-cache \
+    libpq \
+    libpng \
+    libzip \
+    && docker-php-ext-install \
         pdo_mysql \
         pdo_pgsql \
         zip \
         gd
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Install Node.js (using NodeSource repository)
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
-
-# Set working directory for the build
-WORKDIR /app
-
-# Copy application files
-COPY . /app
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
-
-# Install Node.js dependencies and build frontend assets
-RUN npm install && npm run dev
-
-# Stage 2: Runtime stage with Alpine
-FROM php:8.2-fpm-alpine
-
-# Install only runtime dependencies
-RUN apk add --no-cache \
-    libpq \
-    libpng \
-    libzip
-
-# Copy compiled extensions from the build stage
-COPY --from=build /usr/local/lib/php/extensions /usr/local/lib/php/extensions
-COPY --from=build /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
-
 # Set working directory
 WORKDIR /app
 
-# Copy application files from the build stage
-COPY --from=build /app /app
+# Copy application code
+COPY . /app
 
-# Set appropriate permissions for Laravel folders
+# Copy built assets from the build stage
+COPY --from=build /app/public /app/public
+
+# Install PHP dependencies with composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    composer install --no-dev --optimize-autoloader
+
+# Set appropriate permissions
 RUN chown -R www-data:www-data /app
 
-# Expose port
+# Expose the application port
 EXPOSE 9001
 
 # Start Laravel application

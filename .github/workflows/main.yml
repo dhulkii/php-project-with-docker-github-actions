@@ -1,4 +1,4 @@
-name: Deploy New Docker Containerrr
+name: Deploy New Docker Container
 
 on:
   push:
@@ -36,14 +36,14 @@ jobs:
       - name: Deploy on the server
         run: |
           ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Set up environment variables
-            export COMMIT_ID=$(git -C /home/ubuntu/innoshop rev-parse --short HEAD)
+            # Define variables
+            COMMIT_ID=$(git -C /home/ubuntu/your-app-repo rev-parse --short HEAD)
 
             # Stop and remove the old container if it exists
             if docker ps -a --filter "name=php-app" --format '{{.Names}}' | grep -q '^php-app$'; then
-              docker commit php-app old-php-app:backup-\$(date +'%Y%m%d%H%M%S')
-              docker tag old-php-app:backup-\$(date +'%Y%m%d%H%M%S') ${{ secrets.DOCKER_USERNAME }}/php-app:backup-\$(date +'%Y%m%d%H%M%S')
-              docker push ${{ secrets.DOCKER_USERNAME }}/php-app:backup-\$(date +'%Y%m%d%H%M%S')
+              docker commit php-app old-php-app:backup-$(date +'%Y%m%d%H%M%S')
+              docker tag old-php-app:backup-$(date +'%Y%m%d%H%M%S') ${{ secrets.DOCKER_USERNAME }}/php-app:backup-$(date +'%Y%m%d%H%M%S')
+              docker push ${{ secrets.DOCKER_USERNAME }}/php-app:backup-$(date +'%Y%m%d%H%M%S')
               docker stop php-app
               docker rm php-app
             fi
@@ -56,12 +56,12 @@ jobs:
             git pull origin main
 
             # Build the new Docker image with the commit ID
-            docker build -t php-app:\$COMMIT_ID -t php-app:latest .
+            docker build -t php-app:$COMMIT_ID -t php-app:latest .
 
             # Push the new image to DockerHub
-            docker tag php-app:\$COMMIT_ID ${{ secrets.DOCKER_USERNAME }}/php-app:\$COMMIT_ID
+            docker tag php-app:$COMMIT_ID ${{ secrets.DOCKER_USERNAME }}/php-app:$COMMIT_ID
             docker tag php-app:latest ${{ secrets.DOCKER_USERNAME }}/php-app:latest
-            docker push ${{ secrets.DOCKER_USERNAME }}/php-app:\$COMMIT_ID
+            docker push ${{ secrets.DOCKER_USERNAME }}/php-app:$COMMIT_ID
             docker push ${{ secrets.DOCKER_USERNAME }}/php-app:latest
 
             # Run the new container

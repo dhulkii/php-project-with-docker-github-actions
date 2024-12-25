@@ -14,10 +14,9 @@ RUN npm install
 # Copy resources if they exist
 COPY resources/js ./resources/js
 RUN mkdir -p ./resources/css && echo "{}" > ./resources/css/placeholder.css
-COPY resources/css ./resources/css
 
-# Build assets (if applicable)
-RUN npm run prod
+# Build assets only if resources exist
+RUN [ -d "./resources/css" ] && npm run prod || echo "Skipping asset build; no resources found."
 
 # Stage 2: PHP Application Setup
 FROM php:8.2-fpm-alpine
@@ -46,7 +45,7 @@ RUN composer install --no-dev --optimize-autoloader
 
 # Copy built assets from the build stage
 COPY --from=build /app/public/js /app/public/js
-COPY --from=build /app/public/css /app/public/css
+RUN mkdir -p /app/public/css && cp /app/public/css/placeholder.css /app/public/css/placeholder.css
 
 # Set appropriate permissions for Laravel folders
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache

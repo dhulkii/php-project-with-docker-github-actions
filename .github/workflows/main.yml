@@ -41,9 +41,9 @@ jobs:
 
            docker stop php-app
 
-           docker rm php app
+           docker rm php-app
 
-           docker systemc prune -af
+           docker system prune -af
            
           EOF
 

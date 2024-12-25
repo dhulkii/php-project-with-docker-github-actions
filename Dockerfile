@@ -1,16 +1,16 @@
 # Stage 1: Build stage for PHP dependencies and Node.js assets
 FROM php:8.2-fpm-alpine AS build
 
-# Install build dependencies for PHP extensions and Node.js
-RUN apk add --no-cache --virtual .build-deps \
+# Install dependencies for Laravel, PHP extensions, and Node.js
+RUN apk add --no-cache \
     git \
     unzip \
     curl \
     libzip-dev \
     libpng-dev \
     libpq-dev \
-    build-base \
-    nodejs npm && \
+    nodejs \
+    npm && \
     docker-php-ext-install \
         pdo_mysql \
         pdo_pgsql \
@@ -29,12 +29,8 @@ COPY . /app
 # Install PHP dependencies (production only) and optimize autoloader
 RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
 
-# Install Node.js dependencies and build frontend assets
-RUN npm ci --production && npm run prod
-
-# Clean up unnecessary build dependencies and caches to reduce size
-RUN apk del .build-deps && \
-    rm -rf /root/.composer/cache /root/.npm /app/node_modules /app/resources/js /app/resources/css
+# Install Node.js dependencies and build frontend assets (skip dev dependencies)
+RUN npm install --production && npm run prod
 
 # Stage 2: Runtime stage
 FROM php:8.2-fpm-alpine

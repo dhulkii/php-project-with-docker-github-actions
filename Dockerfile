@@ -10,8 +10,7 @@ RUN apk add --no-cache --virtual .build-deps \
     libpng-dev \
     libpq-dev \
     build-base \
-    nodejs \
-    npm && \
+    nodejs npm && \
     docker-php-ext-install \
         pdo_mysql \
         pdo_pgsql \
@@ -31,7 +30,7 @@ COPY . /app
 RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
 
 # Install Node.js dependencies and build frontend assets
-RUN npm install --production && npm run prod
+RUN npm ci --production && npm run prod
 
 # Clean up unnecessary build dependencies and caches to reduce size
 RUN apk del .build-deps && \

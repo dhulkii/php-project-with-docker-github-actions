@@ -43,7 +43,8 @@ FROM php:8.2-fpm-alpine AS runtime
 # Install only the necessary runtime dependencies (no build tools)
 RUN apk add --no-cache \
     libpng-dev \
-    libpq-dev
+    libpq-dev \
+    postgresql-client
 
 # Copy only the necessary files from the build stage
 COPY --from=build /app /app

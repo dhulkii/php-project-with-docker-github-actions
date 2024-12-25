@@ -37,7 +37,7 @@ jobs:
         run: |
           ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Set up environment variables
-            export COMMIT_ID=$(git -C /home/ubuntu/your-app-repo rev-parse --short HEAD)
+            export COMMIT_ID=$(git -C /home/ubuntu/innoshop rev-parse --short HEAD)
 
             # Stop and remove the old container if it exists
             if docker ps -a --filter "name=php-app" --format '{{.Names}}' | grep -q '^php-app$'; then

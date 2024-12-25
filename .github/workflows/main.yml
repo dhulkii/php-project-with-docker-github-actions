@@ -67,7 +67,7 @@ jobs:
             docker system prune -af
           EOF
 
-      # Step 8: Build the new Docker image and push to Docker Hub
+      # Step 8: Build and Push New Docker Image
       - name: Build and Push New Docker Image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.commit_id }} -t ${{ secrets.DOCKER_USERNAME }}/php-app:latest .
@@ -86,10 +86,10 @@ jobs:
       - name: Clean up SSH private key
         run: |
           rm -f private_key.pem
-        if: always()
+        if: ${{ always() }}
 
       # Step 11: Clean up known_hosts file
       - name: Clean up known_hosts file
         run: |
           rm -f ~/.ssh/known_hosts
-        if: always
+        if: ${{ always() }}

@@ -28,14 +28,15 @@ WORKDIR /app
 # Copy application files
 COPY . /app
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies (production only) and optimize autoloader
+RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
 
 # Install Node.js dependencies and build frontend assets
-RUN npm install && npm run dev
+RUN npm install --production && npm run prod
 
-# Remove build dependencies to reduce size
-RUN apk del .build-deps
+# Clean up temporary files, caches, and unnecessary build dependencies
+RUN apk del .build-deps && \
+    rm -rf /root/.composer/cache /root/.npm /app/node_modules /app/resources/js /app/resources/css
 
 # Stage 2: Runtime stage
 FROM php:8.2-fpm-alpine

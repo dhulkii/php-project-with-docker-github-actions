@@ -19,7 +19,7 @@ RUN apk add --no-cache --virtual .build-deps \
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install Node.js (using Node.js from Alpine community repository)
+# Install Node.js and npm (make sure npm is available)
 RUN apk add --no-cache nodejs npm
 
 # Set working directory for the build

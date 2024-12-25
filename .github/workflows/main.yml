@@ -44,15 +44,7 @@ jobs:
         id: get_commit
         run: echo "commit_id=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      # Step 6: Tag and Push Old Image to Docker Hub
-      #- name: Tag and Push Old Image to Docker Hub
-      #  run: |
-      #    # Tag old image with commit ID (if exists)
-      #    docker tag ${{ secrets.DOCKER_USERNAME }}/php-app:latest ${{ secrets.DOCKER_USERNAME }}/php-app:backup-${{ env.commit_id }}
-      #    # Push the old image to Docker Hub
-      #    docker push ${{ secrets.DOCKER_USERNAME }}/php-app:backup-${{ env.commit_id }}
-
-      # Step 7: SSH into the server and stop/remove old container and prune
+      # Step 6: SSH into the server and stop/remove old container and prune
       - name: SSH into the server and stop/remove old container
         run: |
           ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
@@ -67,28 +59,32 @@ jobs:
             docker system prune -af
           EOF
 
-      # Step 8: Build and Push New Docker Image
+      # Step 7: Build and Push New Docker Image
       - name: Build and Push New Docker Image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.commit_id }} -t ${{ secrets.DOCKER_USERNAME }}/php-app:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.commit_id }}
           docker push ${{ secrets.DOCKER_USERNAME }}/php-app:latest
 
-      # Step 9: SSH into the server and run the new container
+      # Step 8: SSH into the server and run the new container with the .env file mounted
       - name: Deploy New Container on the Server
         run: |
           ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Run the new container
-            docker run -d --name php-app -p 9001:9001 ${{ secrets.DOCKER_USERNAME }}/php-app:latest
+            # Run the new container and mount the .env file from the server
+            docker run -d \
+              --name php-app \
+              -p 9001:9001 \
+              -v /home/ubuntu/innoshop/.env:/app/.env \
+              ${{ secrets.DOCKER_USERNAME }}/php-app:latest
           EOF
 
-      # Step 10: Clean up SSH private key
+      # Step 9: Clean up SSH private key
       - name: Clean up SSH private key
         run: |
           rm -f private_key.pem
         if: ${{ always() }}
 
-      # Step 11: Clean up known_hosts file
+      # Step 10: Clean up known_hosts file
       - name: Clean up known_hosts file
         run: |
           rm -f ~/.ssh/known_hosts

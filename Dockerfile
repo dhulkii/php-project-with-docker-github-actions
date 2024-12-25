@@ -5,13 +5,18 @@ WORKDIR /app
 # Copy only package.json to leverage Docker cache
 COPY package.json ./
 
-# If package-lock.json exists, uncomment the next line:
+# Uncomment the next line if package-lock.json exists:
 # COPY package-lock.json ./
 
-# Install dependencies and build assets
+# Install dependencies
 RUN npm install
+
+# Copy resources if they exist
 COPY resources/js ./resources/js
+RUN mkdir -p ./resources/css && echo "{}" > ./resources/css/placeholder.css
 COPY resources/css ./resources/css
+
+# Build assets (if applicable)
 RUN npm run prod
 
 # Stage 2: PHP Application Setup

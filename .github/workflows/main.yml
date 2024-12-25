@@ -9,8 +9,7 @@ env:
   SERVER_HOST: ${{ secrets.SERVER_HOST }}
   SERVER_USER: ${{ secrets.SERVER_USER }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
 jobs:
   deploy-container:
     runs-on: ubuntu-latest
@@ -20,70 +19,67 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v3
 
-      # Step 2: Get the short Git commit ID
-      - name: Get Commit ID
-        id: get_commit
-        run: echo "commit_id=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      # Step 3: Log in to DockerHub
-      - name: Log in to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # Step 4: Set up the SSH key for server connection
+      # Step 2: Set up the SSH key for server connection
       - name: Set up SSH key
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
 
-      # Step 5: Add server public key to known_hosts
+      # Step 3: Add server public key to known_hosts
       - name: Add server public key to known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      # Step 6: SSH into the server and perform deployment
+      # Step 4: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 5: Get the short Git commit ID
+      - name: Get Commit ID
+        id: get_commit
+        run: echo "commit_id=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      # Step 6: Build the Docker image with commit ID
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.commit_id }} -t ${{ secrets.DOCKER_USERNAME }}/php-app:latest .
+
+      # Step 7: Push the Docker image to Docker Hub
+      - name: Push Docker Image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.commit_id }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/php-app:latest
+
+      # Step 8: SSH into the server and stop/remove old container and run the new one
       - name: Deploy on the server
         run: |
           ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Define the COMMIT_ID from the environment
-            export COMMIT_ID="${{ env.commit_id }}"
-
-            # Navigate to the application directory
+            # Navigate to the project directory
             cd /home/ubuntu/innoshop || exit 1
 
-            # Stop and remove the old container if it exists
-            if docker ps -a --filter "name=php-app" --format '{{.Names}}' | grep -q '^php-app$'; then
-              docker stop php-app
-              docker rm php-app
-            fi
+            # Stop and remove the old container
+            docker stop php-app
+            docker rm php-app
 
-            # Remove old Docker images
-            docker images --filter=reference="php-app" --format "{{.ID}}" | xargs -r docker rmi -f
-
-            # Build the new Docker image with the commit ID
-            docker build -t php-app:$COMMIT_ID -t php-app:latest .
-
-            # Push the new image to DockerHub
-            docker tag php-app:$COMMIT_ID ${{ secrets.DOCKER_USERNAME }}/php-app:$COMMIT_ID
-            docker tag php-app:latest ${{ secrets.DOCKER_USERNAME }}/php-app:latest
-            docker push ${{ secrets.DOCKER_USERNAME }}/php-app:$COMMIT_ID
-            docker push ${{ secrets.DOCKER_USERNAME }}/php-app:latest
+            # Remove the old image from the server
+            docker rmi php-app:latest
 
             # Run the new container
-            docker run -d --name php-app -p 9001:9001 php-app:latest
+            docker run -d --name php-app -p 9001:9001 ${{ secrets.DOCKER_USERNAME }}/php-app:latest
           EOF
 
-      # Step 7: Clean up SSH private key
+      # Step 9: Clean up SSH private key
       - name: Clean up SSH private key
         run: |
           rm -f private_key.pem
         if: always()
 
-      # Step 8: Clean up known_hosts file
+      # Step 10: Clean up known_hosts file
       - name: Clean up known_hosts file
         run: |
           rm -f ~/.ssh/known_hosts

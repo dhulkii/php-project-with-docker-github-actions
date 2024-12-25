@@ -45,12 +45,12 @@ jobs:
         run: echo "commit_id=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       # Step 6: Tag and Push Old Image to Docker Hub
-      - name: Tag and Push Old Image to Docker Hub
-        run: |
-          # Tag old image with commit ID (if exists)
-          docker tag ${{ secrets.DOCKER_USERNAME }}/php-app:latest ${{ secrets.DOCKER_USERNAME }}/php-app:backup-${{ env.commit_id }}
-          # Push the old image to Docker Hub
-          docker push ${{ secrets.DOCKER_USERNAME }}/php-app:backup-${{ env.commit_id }}
+      #- name: Tag and Push Old Image to Docker Hub
+      #  run: |
+      #    # Tag old image with commit ID (if exists)
+      #    docker tag ${{ secrets.DOCKER_USERNAME }}/php-app:latest ${{ secrets.DOCKER_USERNAME }}/php-app:backup-${{ env.commit_id }}
+      #    # Push the old image to Docker Hub
+      #    docker push ${{ secrets.DOCKER_USERNAME }}/php-app:backup-${{ env.commit_id }}
 
       # Step 7: SSH into the server and stop/remove old container and prune
       - name: SSH into the server and stop/remove old container

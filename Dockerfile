@@ -1,5 +1,5 @@
-# Use official PHP image with PHP-FPM and necessary extensions
-FROM php:8.2-fpm
+# Stage 1: Build the application with all dependencies
+FROM php:8.2-fpm AS build
 
 # Install system dependencies and PHP extensions for Laravel
 RUN apt-get update && apt-get install -y \
@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     libzip-dev \
     libpng-dev \
-    libpq-dev && \
+    libpq-dev \
+    libjpeg62-turbo-dev && \
     docker-php-ext-install \
         pdo_mysql \
         pdo_pgsql \
@@ -30,13 +31,35 @@ WORKDIR /app
 COPY . /app
 
 # Install PHP dependencies using Composer
-RUN composer install
-
-# Set appropriate permissions for Laravel folders
-RUN chown -R www-data:www-data /app
+RUN composer install --no-dev --optimize-autoloader
 
 # Install Node.js dependencies and run the dev build
 RUN npm install && npm run dev
+
+# Stage 2: Production image (much smaller)
+FROM php:8.2-fpm
+
+# Install only necessary dependencies for running the application
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    libpng-dev \
+    libpq-dev \
+    libjpeg62-turbo-dev && \
+    docker-php-ext-install \
+        pdo_mysql \
+        pdo_pgsql \
+        zip \
+        gd && \
+    docker-php-ext-enable pdo_mysql pdo_pgsql
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the built application from the build stage
+COPY --from=build /app /app
+
+# Set appropriate permissions for Laravel folders
+RUN chown -R www-data:www-data /app
 
 # Expose port 9001
 EXPOSE 9001

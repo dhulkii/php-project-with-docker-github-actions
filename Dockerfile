@@ -30,7 +30,7 @@ COPY . /app
 # Install PHP dependencies (production only) and optimize autoloader
 RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
 
-# Install Node.js dependencies (production only) and build frontend assets
+# Install Node.js dependencies and build frontend assets
 RUN npm install --production && npm run prod
 
 # Clean up unnecessary build dependencies and caches to reduce size
@@ -55,11 +55,8 @@ WORKDIR /app
 COPY --from=build /usr/local/lib/php/extensions /usr/local/lib/php/extensions
 COPY --from=build /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 
-# Copy application files from the build stage (excluding unnecessary ones)
+# Copy application files from the build stage
 COPY --from=build /app /app
-
-# Remove unnecessary files from the application directory
-RUN rm -rf /app/.git /app/tests /app/node_modules /app/resources/js /app/resources/css
 
 # Set appropriate permissions for Laravel folders
 RUN chown -R www-data:www-data /app

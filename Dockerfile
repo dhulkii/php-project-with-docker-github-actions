@@ -9,7 +9,9 @@ RUN apk add --no-cache --virtual .build-deps \
     libzip-dev \
     libpng-dev \
     libpq-dev \
-    build-base && \
+    build-base \
+    nodejs \
+    npm && \
     docker-php-ext-install \
         pdo_mysql \
         pdo_pgsql \
@@ -18,9 +20,6 @@ RUN apk add --no-cache --virtual .build-deps \
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Install Node.js and npm (make sure npm is available)
-RUN apk add --no-cache nodejs npm
 
 # Set working directory for the build
 WORKDIR /app
@@ -32,7 +31,7 @@ COPY . /app
 RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
 
 # Install Node.js dependencies and build frontend assets
-RUN npm install --production && npm run prod
+RUN npm install && npm run dev  # Reverting back to dev for correct build
 
 # Clean up temporary files, caches, and unnecessary build dependencies
 RUN apk del .build-deps && \
@@ -45,7 +44,9 @@ FROM php:8.2-fpm-alpine
 RUN apk add --no-cache \
     libpq \
     libpng \
-    libzip
+    libzip \
+    nodejs \
+    npm
 
 # Set working directory
 WORKDIR /app

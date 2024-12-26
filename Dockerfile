@@ -31,7 +31,7 @@ COPY . /app
 RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
 
 # Install Node.js dependencies and build frontend assets
-RUN npm install && npm run prod
+RUN npm install && npm run dev  # Reverting back to dev for correct build
 
 # Clean up temporary files, caches, and unnecessary build dependencies
 RUN apk del .build-deps && \
@@ -40,12 +40,13 @@ RUN apk del .build-deps && \
 # Stage 2: Runtime stage
 FROM php:8.2-fpm-alpine
 
-# Install runtime dependencies and Nginx
+# Install only runtime dependencies
 RUN apk add --no-cache \
     libpq \
     libpng \
     libzip \
-    nginx
+    nodejs \
+    npm
 
 # Set working directory
 WORKDIR /app
@@ -57,14 +58,11 @@ COPY --from=build /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 # Copy application files from the build stage
 COPY --from=build /app /app
 
-# Copy Nginx configuration
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
-
 # Set appropriate permissions for Laravel folders
 RUN chown -R www-data:www-data /app
 
-# Expose HTTP port
-EXPOSE 80
+# Expose port
+EXPOSE 9001
 
-# Start Nginx and PHP-FPM
+# Start Laravel application
 CMD ["sh", "-c", "php artisan key:generate && php artisan migrate && php artisan db:seed && php-fpm & nginx -g 'daemon off;'"]

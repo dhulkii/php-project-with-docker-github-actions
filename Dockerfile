@@ -42,6 +42,7 @@ FROM php:8.2-fpm-alpine
 
 # Install only runtime dependencies
 RUN apk add --no-cache \
+    nginx \
     libpq \
     libpng \
     libzip \
@@ -61,8 +62,11 @@ COPY --from=build /app /app
 # Set appropriate permissions for Laravel folders
 RUN chown -R www-data:www-data /app
 
+# Copy NGINX configuration file
+COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+
 # Expose port
-#EXPOSE 9001
+EXPOSE 8080
 
 # Start Laravel application
 CMD ["sh", "-c", "php artisan key:generate || true && php artisan migrate || true && php artisan db:seed || true && php-fpm"]

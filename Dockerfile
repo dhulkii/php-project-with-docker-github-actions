@@ -62,7 +62,7 @@ COPY --from=build /app /app
 RUN chown -R www-data:www-data /app
 
 # Expose port
-EXPOSE 9001
+#EXPOSE 9001
 
 # Start Laravel application
 CMD ["sh", "-c", "php artisan key:generate || true && php artisan migrate || true && php artisan db:seed || true && php-fpm"]

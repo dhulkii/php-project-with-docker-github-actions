@@ -63,10 +63,10 @@ COPY --from=build /app /app
 RUN chown -R www-data:www-data /app
 
 # Copy NGINX configuration file
-COPY ./nginx.conf /etc/nginx/nginx.conf
+#COPY ./nginx.conf /etc/nginx/nginx.conf
 
 # Expose port
-EXPOSE 8080
+#EXPOSE 8080
 
 # Start Laravel application
 CMD ["sh", "-c", "php artisan key:generate || true && php artisan migrate || true && php artisan db:seed || true && php-fpm"]

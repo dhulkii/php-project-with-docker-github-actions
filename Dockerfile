@@ -42,7 +42,7 @@ FROM php:8.2-fpm-alpine
 
 # Install only runtime dependencies
 RUN apk add --no-cache \
-    nginx \
+    #nginx \
     libpq \
     libpng \
     libzip \
@@ -63,7 +63,7 @@ COPY --from=build /app /app
 RUN chown -R www-data:www-data /app
 
 # Copy NGINX configuration file
-COPY ./nginx.conf /etc/nginx/nginx.conf
+#COPY ./nginx.conf /etc/nginx/nginx.conf
 
 # Expose port
 #EXPOSE 8080

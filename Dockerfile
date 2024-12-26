@@ -63,7 +63,7 @@ COPY --from=build /app /app
 RUN chown -R www-data:www-data /app
 
 # Copy NGINX configuration file
-COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./nginx.conf /etc/nginx/nginx.conf
 
 # Expose port
 EXPOSE 8080

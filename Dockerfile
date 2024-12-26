@@ -66,7 +66,7 @@ RUN chown -R www-data:www-data /app
 EXPOSE 9001
 
 # Copy Nginx configuration
-COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./default.conf /etc/nginx/conf.d/default.conf
 
 # Start Laravel application
 CMD ["sh", "-c", "php artisan key:generate && php artisan migrate && php artisan db:seed && php-fpm & nginx -g 'daemon off;'"]

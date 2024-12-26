@@ -73,7 +73,7 @@ jobs:
             # Run the new container and mount the .env file from the server
             docker run -d \
               --name php-app \
-              -p 8080:8080 \
+              -p 9000:9000 \
               -v /home/ubuntu/innoshop/.env:/app/.env \
               ${{ secrets.DOCKER_USERNAME }}/php-app:latest
           EOF

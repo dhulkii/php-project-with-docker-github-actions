@@ -75,10 +75,11 @@ jobs:
               --name php-app \
               -p 9000:9000 \
               -v /home/ubuntu/innoshop/.env:/app/.env \
+                 
               ${{ secrets.DOCKER_USERNAME }}/php-app:latest
           EOF
 
-      # Step 9: Clean up SSH private key
+      # /home/ubuntu/innoshop:/app \  Step 9: Clean up SSH private key
       - name: Clean up SSH private key
         run: |
           rm -f private_key.pem

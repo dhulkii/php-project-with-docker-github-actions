@@ -42,7 +42,6 @@ FROM php:8.2-fpm-alpine
 
 # Install only runtime dependencies
 RUN apk add --no-cache \
-    nginx \
     libpq \
     libpng \
     libzip \
@@ -65,8 +64,5 @@ RUN chown -R www-data:www-data /app
 # Expose port
 EXPOSE 9001
 
-# Copy Nginx configuration
-COPY ./default.conf /etc/nginx/conf.d/default.conf
-
 # Start Laravel application
-CMD ["sh", "-c", "php artisan key:generate && php artisan migrate && php artisan db:seed && php-fpm & nginx -g 'daemon off;'"]
+CMD ["sh", "-c", "php artisan key:generate || true && php artisan migrate || true && php artisan db:seed || true && php-fpm"]

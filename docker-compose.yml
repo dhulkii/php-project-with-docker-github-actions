@@ -15,6 +15,7 @@ services:
     ports:
       - "80:80"
     volumes:
+      - /home/ubuntu/php-project-with-docker-github-actions:/app
       - /home/ubuntu/php-project-with-docker-github-actions/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - php-app

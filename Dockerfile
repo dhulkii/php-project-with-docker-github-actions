@@ -24,30 +24,25 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Set working directory for the build
 WORKDIR /app
 
-# Copy application files
-COPY . /app
+# Install Node.js globally in the build stage (optional)
+RUN npm install -g npm
 
-# Install PHP dependencies (production only) and optimize autoloader
-RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
-
-# Install Node.js dependencies and build frontend assets
-RUN npm install && npm run dev  # Reverting back to dev for correct build
-
-# Clean up temporary files, caches, and unnecessary build dependencies
-RUN apk del .build-deps && \
-    rm -rf /root/.composer/cache /root/.npm /app/node_modules /app/resources/js /app/resources/css
+# Clean up build dependencies to reduce image size
+RUN apk del .build-deps
 
 # Stage 2: Runtime stage
 FROM php:8.2-fpm-alpine
 
 # Install only runtime dependencies
 RUN apk add --no-cache \
-    #nginx \
     libpq \
     libpng \
     libzip \
     nodejs \
     npm
+
+# Copy Composer from the build stage
+COPY --from=build /usr/local/bin/composer /usr/local/bin/composer
 
 # Set working directory
 WORKDIR /app
@@ -59,14 +54,13 @@ COPY --from=build /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 # Copy application files from the build stage
 COPY --from=build /app /app
 
+# Ensure the directories exist before setting permissions
+RUN mkdir -p /app/storage /app/bootstrap/cache
+
 # Set appropriate permissions for Laravel folders
-RUN chown -R www-data:www-data /app
+RUN chmod -R 775 /app/storage /app/bootstrap/cache
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
-# Copy NGINX configuration file
-#COPY ./nginx.conf /etc/nginx/nginx.conf
+# Expose port and set CMD
+CMD ["sh", "-c", "composer install && npm install && npm run dev && php artisan key:generate && php artisan migrate && php artisan db:seed && php-fpm -F"]
 
-# Expose port
-#EXPOSE 8080
-
-# Start Laravel application
-CMD ["sh", "-c", "php artisan key:generate || true && php artisan migrate || true && php artisan db:seed || true && php-fpm"]

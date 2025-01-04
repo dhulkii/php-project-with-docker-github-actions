@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  php-app:
+    image: php-app:latest
+    container_name: php-app
+    ports:
+      - "9000:9000"
+    volumes:
+      - /home/ubuntu/innoshop:/app
+
+  nginx-app:
+    image: nginx:alpine
+    container_name: nginx-app
+    ports:
+      - "80:80"
+    volumes:
+      - /home/ubuntu/innoshop:/app
+      - /home/ubuntu/innoshop/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php-app
+

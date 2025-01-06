@@ -9,7 +9,6 @@ env:
   SERVER_HOST: ${{ secrets.SERVER_HOST }}
   SERVER_USER: ${{ secrets.SERVER_USER }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  ACTIONS_STEP_DEBUG: true
 
 jobs:
   deploy-container:
@@ -41,26 +40,26 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       # Step 5: Get the short Git commit ID
-      - name: Get Commit ID
-        id: get_commit
-        run: echo "commit_id=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      # Step 6: SSH into the server and stop/remove old container and prune
       - name: SSH into the server and stop/remove old container
-        run: |
-          ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Set up environment variables
-            export COMMIT_ID=$(git -C /home/ubuntu/php-project-with-docker-github-actions rev-parse --short HEAD)
+       run: |
+         ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+           set -eux  # Enable error handling and debug output
+      
+      # Set up environment variables
+           export COMMIT_ID=$(git -C /home/ubuntu/php-project-with-docker-github-actions rev-parse --short HEAD)
+           echo "Current Commit ID: $COMMIT_ID"
 
-            # change dir to app dir
-            cd /home/ubuntu/php-project-with-docker-github-actions
+      # Change directory to the application folder
+           cd /home/ubuntu/php-project-with-docker-github-actions
 
-            # Stop and remove the old container
-            docker compose down
+      # Stop and remove the old container
+           echo "Stopping and removing the old container..."
+           docker compose down || echo "No containers to stop."
 
-            # Clean up unused images, containers, and volumes
-            docker system prune -af
-          EOF
+      # Clean up unused Docker images, containers, and volumes
+          echo "Cleaning up Docker resources..."
+          docker system prune -af || echo "Cleanup failed, check manually."
+        EOF
 
       # Step 7: Build and Push New Docker Image
       - name: Build and Push New Docker Image

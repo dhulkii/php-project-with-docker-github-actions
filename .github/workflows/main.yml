@@ -58,6 +58,7 @@ jobs:
         ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd /home/ubuntu/php-project-with-docker-github-actions
           git pull origin master  # Pull latest code changes
+          chown -R ubuntu:ubuntu php-project-with-docker-github-actions
         EOF
 
     # Step 7: Build and Push New Docker Image

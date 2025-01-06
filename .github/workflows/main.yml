@@ -51,9 +51,11 @@ jobs:
             # Set up environment variables
             export COMMIT_ID=$(git -C /home/ubuntu/innoshop rev-parse --short HEAD)
 
+            # change dir to app dir
+            cd /home/ubuntu/php-project-with-docker-github-actions
+
             # Stop and remove the old container
-            docker stop php-app
-            docker rm php-app
+            docker compose down
 
             # Clean up unused images, containers, and volumes
             docker system prune -af
@@ -70,12 +72,8 @@ jobs:
       - name: Deploy New Container on the Server
         run: |
           ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Run the new container and mount the .env file from the server
-            docker run -d \
-              --name php-app \
-              -p 9000:9000 \
-              -v /home/ubuntu/innoshop/.env:/app/.env \
-              ${{ secrets.DOCKER_USERNAME }}/php-app:latest
+            # Run the new container
+            docker compose up -d
           EOF
 
       # Step 9: Clean up SSH private key

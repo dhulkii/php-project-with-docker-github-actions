@@ -41,25 +41,25 @@ jobs:
 
       # Step 5: Get the short Git commit ID
       - name: SSH into the server and stop/remove old container
-       run: |
-         ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-           set -eux  # Enable error handling and debug output
+        run: |
+          ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -eux  # Enable error handling and debug output
       
       # Set up environment variables
-           export COMMIT_ID=$(git -C /home/ubuntu/php-project-with-docker-github-actions rev-parse --short HEAD)
-           echo "Current Commit ID: $COMMIT_ID"
+            export COMMIT_ID=$(git -C /home/ubuntu/php-project-with-docker-github-actions rev-parse --short HEAD)
+            echo "Current Commit ID: $COMMIT_ID"
 
       # Change directory to the application folder
-           cd /home/ubuntu/php-project-with-docker-github-actions
+            cd /home/ubuntu/php-project-with-docker-github-actions
 
       # Stop and remove the old container
-           echo "Stopping and removing the old container..."
-           docker compose down || echo "No containers to stop."
+            echo "Stopping and removing the old container..."
+            docker compose down || echo "No containers to stop."
 
       # Clean up unused Docker images, containers, and volumes
-          echo "Cleaning up Docker resources..."
-          docker system prune -af || echo "Cleanup failed, check manually."
-        EOF
+           echo "Cleaning up Docker resources..."
+           docker system prune -af || echo "Cleanup failed, check manually."
+         EOF
 
       # Step 7: Build and Push New Docker Image
       - name: Build and Push New Docker Image

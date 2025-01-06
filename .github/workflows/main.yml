@@ -64,7 +64,7 @@ jobs:
       run: |
         ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd /home/ubuntu/php-project-with-docker-github-actions
-          echo "IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.COMMIT_ID }}" > .env
+          echo "IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.COMMIT_ID }}" >> .env
           docker compose up -d
         EOF
 

@@ -49,7 +49,7 @@ jobs:
           export COMMIT_ID=$(git -C /home/ubuntu/php-project-with-docker-github-actions rev-parse --short HEAD)
           docker compose down
           docker system prune -af
-          git pull origin master
+          
         EOF
 
     # Step : Build and Push New Docker Image

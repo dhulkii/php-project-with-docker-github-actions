@@ -37,6 +37,7 @@ jobs:
       run: |
         ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd /home/ubuntu/php-project-with-docker-github-actions
+          docker build -t php-app .
           docker compose down
           docker compose up -d
         EOF

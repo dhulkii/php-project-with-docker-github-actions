@@ -9,72 +9,72 @@ env:
   SERVER_HOST: ${{ secrets.SERVER_HOST }}
   SERVER_USER: ${{ secrets.SERVER_USER }}
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the code
+    # Step 1: Checkout the code
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Add server's public key to known_hosts
+    # Step 2: Add server's public key to known_hosts
     - name: Add server public key to known_hosts
       run: |
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         chmod 644 ~/.ssh/known_hosts
-   
-     # Log in to Docker Hub
+
+    # Step 3: Log in to Docker Hub
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # Set up SSH key for server connection
+    # Step 4: Set up SSH key for server connection
     - name: Set up SSH key
       run: |
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
         chmod 600 private_key.pem
 
-    # SSH into server and build/run app
-    - name: Build and run on the server
+    # Step 5: Get short Git commit ID
+    - name: Get short Git commit ID
+      run: echo "COMMIT_ID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+    # Step 6: SSH into server and clean up old containers
+    - name: Clean up old Docker containers
       run: |
         ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd /home/ubuntu/php-project-with-docker-github-actions
-
-          export COMMIT_ID=$(git -C /home/ubuntu/php-project-with-docker-github-actions rev-parse --short HEAD)
           docker compose down
           docker system prune -af
-          
         EOF
 
-    # Step : Build and Push New Docker Image
+    # Step 7: Build and Push New Docker Image
     - name: Build and Push New Docker Image
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.COMMIT_ID }} -t ${{ secrets.DOCKER_USERNAME }}/php-app:latest .
         docker push ${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.COMMIT_ID }}
         docker push ${{ secrets.DOCKER_USERNAME }}/php-app:latest
-    
-    # SSH into server and build/run app
-    - name: Build and run on the server
+
+    # Step 8: SSH into server and deploy new containers
+    - name: Deploy New Containers
       run: |
         ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd /home/ubuntu/php-project-with-docker-github-actions
-          # Run the new container
-            docker compose up -d
+          echo "IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/php-app:${{ env.COMMIT_ID }}" > .env
+          docker compose up -d
         EOF
-    
-    # Remove the private key file after the SSH connection
+
+    # Step 9: Clean up SSH private key
     - name: Clean up SSH private key
       run: |
         rm -f private_key.pem
       if: always()
 
-    # Clean up known_hosts file
+    # Step 10: Clean up known_hosts file
     - name: Clean up known_hosts file
       run: |
         rm -f ~/.ssh/known_hosts

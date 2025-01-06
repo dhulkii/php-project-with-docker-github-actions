@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   php-app:
-    image: php-app:latest
+    image: ${IMAGE_NAME}
     container_name: php-app
     ports:
       - "9000:9000"

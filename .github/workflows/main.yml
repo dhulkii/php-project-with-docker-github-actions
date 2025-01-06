@@ -49,7 +49,7 @@ jobs:
         run: |
           ssh -T -i private_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Set up environment variables
-            export COMMIT_ID=$(git -C /home/ubuntu/innoshop rev-parse --short HEAD)
+            export COMMIT_ID=$(git -C /home/ubuntu/php-project-with-docker-github-actions rev-parse --short HEAD)
 
             # change dir to app dir
             cd /home/ubuntu/php-project-with-docker-github-actions
